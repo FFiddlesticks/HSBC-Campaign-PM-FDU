@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>炫酷文件上传与确认</title>
+  <style>
+    /* Reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, #0f0c29 0%, #302b63 25%, #24243e 60%), linear-gradient(135deg,#0ea5e9 0%,#8b5cf6 100%);
+      color:#e6eef8;
+      display:flex;align-items:center;justify-content:center;padding:40px;
+    }
+
+    /* Card */
+    .card{
+      width:920px;max-width:95%;background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius:18px;border:1px solid rgba(255,255,255,0.06);backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6), inset 0 -1px 0 rgba(255,255,255,0.02);
+      overflow:hidden;padding:28px;position:relative;
+    }
+
+    .header{
+      display:flex;align-items:center;gap:16px;margin-bottom:18px
+    }
+    .logo{
+      width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#34d399,#60a5fa);box-shadow:0 6px 18px rgba(50,200,160,0.12);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042a2b;font-size:20px
+    }
+    h1{font-size:20px;letter-spacing:0.2px}
+    p.lead{color:rgba(230,238,248,0.75);margin-top:6px}
+
+    .uploader{
+      margin-top:18px;display:flex;gap:18px;align-items:center
+    }
+
+    .dropzone{
+      flex:1;padding:22px;border-radius:12px;border:2px dashed rgba(255,255,255,0.06);display:flex;align-items:center;gap:16px;background:linear-gradient(180deg, rgba(255,255,255,0.012), transparent);
+      transition:all .18s ease;cursor:pointer;position:relative;min-height:110px
+    }
+    .dropzone:hover{transform:translateY(-4px);box-shadow: 0 20px 40px rgba(11,20,40,0.4)}
+
+    .dropzone .text{flex:1}
+    .muted{color:rgba(230,238,248,0.65);font-size:13px}
+    .filebtn{
+      background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;padding:10px 16px;border-radius:10px;color:white;font-weight:600;cursor:pointer;box-shadow:0 8px 24px rgba(76,29,149,0.24)
+    }
+
+    input[type=file]{display:none}
+
+    .status{margin-top:16px;display:flex;gap:12px;align-items:center}
+
+    .toast{
+      padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,#14b8a6, #06b6d4);color:#02111a;font-weight:600;box-shadow:0 8px 20px rgba(6,11,30,0.3)
+    }
+
+    .progresswrap{width:100%;background:rgba(255,255,255,0.03);height:12px;border-radius:999px;overflow:hidden}
+    .progress{height:100%;width:0%;background:linear-gradient(90deg,#f97316,#ef4444);transition:width .2s linear}
+
+    .confirmPanel{margin-top:22px;display:none;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+
+    .row{display:flex;gap:12px;align-items:center}
+    .col{flex:1}
+    label{font-size:13px;color:rgba(230,238,248,0.8);margin-bottom:6px;display:block}
+    input[type=text], input[type=date]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.01);color:inherit}
+
+    .actions{display:flex;gap:12px;justify-content:flex-end;margin-top:14px}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    .btn.primary{background:linear-gradient(90deg,#7c3aed,#06b6d4);color:white;box-shadow:0 10px 30px rgba(99,102,241,0.18)}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+    .modal-backdrop.show{opacity:1;pointer-events:auto}
+    .modal{background:linear-gradient(180deg,#0b1020,#071028);padding:22px;border-radius:14px;border:1px solid rgba(255,255,255,0.04);min-width:320px;box-shadow:0 8px 40px rgba(2,6,23,0.7);text-align:center}
+    .modal h2{margin-bottom:6px}
+    .modal p{color:rgba(230,238,248,0.8)}
+
+    /* Neon footer */
+    .footer{position:absolute;right:20px;bottom:18px;font-size:12px;color:rgba(230,238,248,0.6)}
+
+    /* small screens */
+    @media (max-width:560px){
+      .row{flex-direction:column}
+      .header{gap:12px}
+      .logo{width:48px;height:48px}
+    }
+
+    /* small animated sparkle */
+    .sparkle{position:absolute;right:-60px;top:-40px;width:220px;height:220px;background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 20%),radial-gradient(circle at 70% 70%, rgba(255,255,255,0.04), transparent 18%);transform:rotate(12deg);filter:blur(16px);opacity:0.9}
+
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="sparkle"></div>
+    <div class="header">
+      <div class="logo">UP</div>
+      <div>
+        <h1>文件上传与到期确认</h1>
+        <p class="lead">支持 PDF / DOCX 等文件，上传后可编辑名称与到期日，确认后保存。</p>
+      </div>
+    </div>
+
+    <div class="uploader">
+      <label class="dropzone" id="dropzone">
+        <div style="display:flex;align-items:center;gap:14px;width:100%">
+          <div style="width:56px;height:56px;border-radius:8px;background:linear-gradient(180deg,#111827,#0b1220);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:inset 0 -6px 24px rgba(2,6,23,0.6)">📄</div>
+          <div class="text">
+            <div style="font-weight:700;font-size:15px">点击或拖拽文件到此处上传</div>
+            <div class="muted" style="margin-top:6px">支持 PDF / DOC / DOCX / TXT，单个文件上限示例：50MB</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <button class="filebtn" id="chooseBtn">选择文件</button>
+            <div class="muted" style="margin-top:8px;font-size:12px">或将文件拖进来</div>
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" />
+      </label>
+    </div>
+
+    <div class="status" id="statusArea" style="display:none">
+      <div class="toast" id="toast">上传成功</div>
+      <div style="flex:1">
+        <div class="progresswrap"><div class="progress" id="progressBar"></div></div>
+      </div>
+      <div class="muted" id="timeLabel">正在处理…</div>
+    </div>
+
+    <div class="confirmPanel" id="confirmPanel">
+      <div class="row">
+        <div class="col">
+          <label>文件名</label>
+          <input type="text" id="filenameInput" />
+        </div>
+        <div style="width:18px"></div>
+        <div style="width:260px">
+          <label>到期日</label>
+          <input type="date" id="expiryInput" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="cancelBtn">取消</button>
+        <button class="btn primary" id="confirmBtn">确认并保存</button>
+      </div>
+    </div>
+
+    <div class="footer">© 2025 炫酷上传 • 体验由 CSS 动画驱动</div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h2 id="modalTitle">保存成功</h2>
+      <p id="modalText">文件信息已保存。</p>
+      <div style="height:12px"></div>
+      <button class="btn primary" id="closeModal">我知道了</button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const chooseBtn = document.getElementById('chooseBtn');
+    const dropzone = document.getElementById('dropzone');
+    const statusArea = document.getElementById('statusArea');
+    const toast = document.getElementById('toast');
+    const progressBar = document.getElementById('progressBar');
+    const timeLabel = document.getElementById('timeLabel');
+    const confirmPanel = document.getElementById('confirmPanel');
+    const filenameInput = document.getElementById('filenameInput');
+    const expiryInput = document.getElementById('expiryInput');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const closeModal = document.getElementById('closeModal');
+
+    // helpers
+    function formatDateForInput(date){
+      const y = date.getFullYear();
+      const m = String(date.getMonth()+1).padStart(2,'0');
+      const d = String(date.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // default expiry = 30 days from today
+    function defaultExpiry(){
+      const t = new Date();
+      t.setDate(t.getDate()+30);
+      return t;
+    }
+
+    chooseBtn.addEventListener('click', e=>{fileInput.click();});
+
+    // drag & drop
+    ['dragenter','dragover'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{e.preventDefault();dropzone.style.borderColor='rgba(255,255,255,0.18)';dropzone.style.transform='translateY(-6px)';});
+    });
+    ['dragleave','drop'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{e.preventDefault();dropzone.style.borderColor='rgba(255,255,255,0.06)';dropzone.style.transform='none';});
+    });
+
+    dropzone.addEventListener('drop', e=>{
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(f) handleFile(f);
+    });
+
+    fileInput.addEventListener('change', e=>{
+      const f = e.target.files && e.target.files[0];
+      if(f) handleFile(f);
+    });
+
+    function handleFile(f){
+      // display status
+      statusArea.style.display = 'flex';
+      toast.textContent = '上传成功';
+      progressBar.style.width = '0%';
+      timeLabel.textContent = '处理中…';
+      confirmPanel.style.display = 'none';
+
+      // simulate progress
+      let percent = 0;
+      const step = () => {
+        percent += Math.floor(Math.random()*18)+8; // jump
+        if(percent>100) percent=100;
+        progressBar.style.width = percent+'%';
+        if(percent<100){
+          setTimeout(step, 200+Math.random()*400);
+        }else{
+          // done
+          timeLabel.textContent = '处理完成';
+          // show confirm panel
+          filenameInput.value = f.name.replace(/\.[^/.]+$/, "");
+          const expiry = defaultExpiry();
+          expiryInput.value = formatDateForInput(expiry);
+          confirmPanel.style.display = 'block';
+          // show tiny success pulse
+          toast.animate([{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1)'}],{duration:700});
+        }
+      };
+      // small initial delay to show progress
+      setTimeout(step, 240);
+    }
+
+    cancelBtn.addEventListener('click', ()=>{
+      // reset UI
+      statusArea.style.display = 'none';
+      progressBar.style.width = '0%';
+      confirmPanel.style.display = 'none';
+      fileInput.value = '';
+    });
+
+    confirmBtn.addEventListener('click', ()=>{
+      // Grab values and show modal
+      const name = filenameInput.value.trim() || '未命名文件';
+      const expiry = expiryInput.value || formatDateForInput(defaultExpiry());
+      document.getElementById('modalTitle').textContent = '保存成功';
+      document.getElementById('modalText').textContent = `文件：${name}，到期日：${expiry}`;
+      modalBackdrop.classList.add('show');
+    });
+
+    closeModal.addEventListener('click', ()=>{
+      modalBackdrop.classList.remove('show');
+      // keep the UI state but mark as saved (you could clear if needed)
+      toast.textContent = '已保存';
+      progressBar.style.width = '100%';
+    });
+
+    // close when clicking outside modal
+    modalBackdrop.addEventListener('click', (e)=>{
+      if(e.target === modalBackdrop){ modalBackdrop.classList.remove('show'); }
+    });
+
+    // set initial expiry value when page loads
+    window.addEventListener('DOMContentLoaded', ()=>{
+      expiryInput.value = formatDateForInput(defaultExpiry());
+    });
+
+  </script>
+</body>
+</html>
