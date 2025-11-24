@@ -4,6 +4,10 @@ poppler-utils  # pdf2image的系统依赖
 dashscope>=1.10.0
 img2pdf>=0.4.4
 
+# 数据处理（用于测试）
+pandas>=2.0.0
+openpyxl>=3.1.0  # pandas读取xlsx文件需要
+
 # 配置管理
 pydantic-settings>=2.0.0
 pydantic>=2.0.0

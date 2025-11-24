@@ -155,7 +155,7 @@ def content_structure(content: str) -> str:
 {fields_description}
 
 识别文档的指导原则：
-1. 总共有5种类型的文件，分别是：安慰函，保证金担保合同，个人保证书，公司保证书，应收帐款质押协议
+1. 总共有5种类型的文件，分别是：安慰函，保证金担保合同，个人保证书，公司保证书，应收账款质押协议
 2. 根据文档标题、编号、客户名称等关键信息来区分不同的文档
 3. 连续的页面通常属于同一个文档，但也要注意内容的变化
 4. 同一个文档的页面应该在内容上具有连续性
@@ -262,7 +262,7 @@ def _generate_filename(doc: dict) -> str:
         "保证金担保合同": "{customer}_{type}_{date}_{guarantor}.pdf",
         "个人保证书": "{customer}_{type}_{date}_{guarantor}.pdf",
         "公司保证书": "{customer}_{type}_{date}_{guarantor}.pdf",
-        "应收帐款质押协议": "{customer}_{type}_{date}.pdf",
+        "应收账款质押协议": "{customer}_{type}_{date}.pdf",
     }
     tmpl = mapping.get(doc["type"])
     if not tmpl:
