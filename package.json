@@ -1,0 +1,14 @@
+{
+  "name": "hsbc-campaign-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Root workspace scripts to orchestrate frontend (Vite) and backend (FastAPI) services.",
+  "scripts": {
+    "frontend:open": "npm --prefix src/frontend ci && npm --prefix src/frontend run dev",
+    "backend:query": "python3 -m venv src/backend/.venv && . src/backend/.venv/bin/activate && pip install -r src/backend/requirements.txt && uvicorn src.backend.queryService:app --host 0.0.0.0 --port 8000 --reload",
+    "backend:parse": "python3 -m venv src/backend/.venv && . src/backend/.venv/bin/activate && pip install -r src/backend/requirements.txt && python3 src/backend/main.py" 
+},
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

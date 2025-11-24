@@ -1,0 +1,70 @@
+[
+  {
+    "title": "保证金担保合同",
+    "id": "SCBC-BZJDB-2025-00128",
+    "type": "保证金担保合同",
+    "pages": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "customer_name": "上海盈通科技发展有限公司",
+    "guarantor_name": "上海恒信融资担保有限公司",
+    "sign_date": "2025-10-07",
+    "deadline": null
+  },
+  {
+    "title": "从属协议",
+    "id": "",
+    "type": "应收帐款质押协议",
+    "pages": [
+      8,
+      9,
+      10
+    ],
+    "customer_name": "环球通达进出口贸易有限公司",
+    "guarantor_name": "睿策企业管理咨询有限公司",
+    "sign_date": "2025-11-08",
+    "deadline": null
+  },
+  {
+    "title": "安慰函——授信",
+    "id": "SXH-1234",
+    "type": "安慰函",
+    "pages": [
+      11,
+      12
+    ],
+    "customer_name": "创想时空文化传媒有限公司",
+    "guarantor_name": "创想时空文化传媒有限公司",
+    "sign_date": "2025-06-12",
+    "deadline": null
+  },
+  {
+    "title": "应收账款质押协议",
+    "id": "",
+    "type": "应收帐款质押协议",
+    "pages": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "customer_name": "上海星辉科技有限公司",
+    "guarantor_name": "上海星辉科技有限公司",
+    "sign_date": "2025-09-08",
+    "deadline": "2028-09-08"
+  }
+]

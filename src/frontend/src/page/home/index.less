@@ -1,0 +1,361 @@
+// 朴素色调变量
+@primary-color: #1890ff;
+@primary-hover: #40a9ff;
+@success-color: #52c41a;
+@warning-color: #faad14;
+@error-color: #ff4d4f;
+
+// 中性色系
+@text-color: #262626;
+@text-color-secondary: #595959;
+@text-color-disabled: #8c8c8c;
+
+// 背景色
+@background-color-light: #f8f9fa;
+@background-color-lighter: #fafafa;
+@white: #ffffff;
+
+// 边框
+@border-color-base: #f0f0f0;
+@border-color-light: #e8e8e8;
+@border-radius-base: 6px;
+
+// 阴影
+@box-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.05);
+@box-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.03);
+
+// 页面容器
+.home-page {
+  padding: 24px;
+  background: @background-color-light;
+  min-height: 100vh;
+}
+
+// 汇总卡片样式
+.summary-row {
+  .summary-card {
+    border-radius: @border-radius-base;
+    box-shadow: @box-shadow-card;
+    background: @white;
+    border: 1px solid @border-color-base;
+    
+    .ant-card-body {
+      padding: 20px;
+    }
+    
+    .time-filter {
+      margin-bottom: 16px;
+      
+      .filter-btn {
+        margin-right: 12px;
+        border: 1px solid @border-color-light;
+        border-radius: 16px;
+        padding: 4px 16px;
+        height: auto;
+        font-size: 13px;
+        color: @text-color-secondary;
+        background: @white;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          border-color: @primary-color;
+          color: @primary-color;
+        }
+        
+        &.filter-btn-active {
+          background: @primary-color;
+          border-color: @primary-color;
+          color: @white;
+          
+          &:hover {
+            background: @primary-hover;
+            border-color: @primary-hover;
+          }
+        }
+      }
+    }
+    
+    .summary-content {
+      .summary-title {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: @text-color;
+        
+        .highlight-count {
+          color: @primary-color;
+          font-weight: 600;
+        }
+      }
+      
+      .summary-desc {
+        color: @text-color-secondary;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// 图表卡片样式
+.chart-row {
+  margin-top: 20px;
+  
+  .chart-card {
+    border-radius: @border-radius-base;
+    box-shadow: @box-shadow-card;
+    background: @white;
+    border: 1px solid @border-color-base;
+    
+    .ant-card-body {
+      padding: 20px;
+    }
+    
+    .chart-header {
+      margin-bottom: 16px;
+      
+      .chart-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 500;
+        color: @text-color;
+      }
+    }
+    
+    .chart-container {
+      height: 280px !important;
+    }
+  }
+}
+
+// 表格卡片样式
+.table-row {
+  margin-top: 20px;
+  
+  .table-card {
+    border-radius: @border-radius-base;
+    box-shadow: @box-shadow-card;
+    background: @white;
+    border: 1px solid @border-color-base;
+    
+    .ant-card-body {
+      padding: 20px;
+    }
+    
+    .table-header {
+      margin-bottom: 16px;
+      
+      .table-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        
+        .batch-reminder-btn {
+          background: @primary-color;
+          border-color: @primary-color;
+          border-radius: 4px;
+          height: 36px;
+          padding: 0 16px;
+          font-size: 14px;
+          font-weight: 400;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: @primary-hover;
+            border-color: @primary-hover;
+          }
+          
+          &:disabled {
+            background: @background-color-light;
+            border-color: @border-color-light;
+            color: @text-color-disabled;
+          }
+        }
+        
+        .selected-count {
+          color: @text-color-secondary;
+          font-size: 13px;
+        }
+      }
+    }
+    
+    .file-table {
+      .ant-table-thead > tr > th {
+        background: @background-color-lighter;
+        color: @text-color;
+        font-weight: 500;
+        border-bottom: 1px solid @border-color-light;
+        padding: 12px 8px;
+        font-size: 13px;
+      }
+      
+      .ant-table-tbody > tr > td {
+        padding: 12px 8px;
+        border-bottom: 1px solid @border-color-light;
+        font-size: 13px;
+        color: @text-color;
+        transition: background-color 0.2s ease;
+      }
+      
+      .ant-table-tbody > tr:hover > td {
+        background: fade(@primary-color, 2%);
+      }
+      
+      // 截止日期标签
+      .deadline-tag {
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        border: none;
+        margin: 0;
+        font-weight: 400;
+        
+        &.deadline-urgent {
+          background: fade(@error-color, 8%);
+          color: @error-color;
+        }
+        
+        &.deadline-warning {
+          background: fade(@warning-color, 8%);
+          color: @warning-color;
+        }
+        
+        &.deadline-normal {
+          background: fade(@success-color, 8%);
+          color: @success-color;
+        }
+      }
+      
+      // 提醒按钮
+      .reminder-btn {
+        padding: 0;
+        height: auto;
+        color: @primary-color;
+        font-size: 13px;
+        
+        &:hover {
+          color: @primary-hover;
+        }
+        
+        &:disabled {
+          color: @text-color-disabled;
+        }
+      }
+      
+      // 状态徽章
+      .reminded-badge {
+        .ant-badge-status-dot {
+          width: 6px;
+          height: 6px;
+        }
+        
+        .ant-badge-status-text {
+          color: @success-color;
+          font-size: 13px;
+        }
+      }
+      
+      .not-reminded {
+        color: @text-color-disabled;
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+// 通用样式优化
+.ant-card {
+  transition: box-shadow 0.2s ease;
+  
+  &:hover {
+    box-shadow: @box-shadow-light;
+  }
+}
+
+.ant-btn {
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .home-page {
+    padding: 16px;
+  }
+  
+  .summary-row {
+    .summary-card {
+      .time-filter {
+        .filter-btn {
+          margin-bottom: 8px;
+          margin-right: 8px;
+        }
+      }
+      
+      .summary-content {
+        .summary-title {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+  
+  .chart-row {
+    .chart-card {
+      .chart-container {
+        height: 240px !important;
+      }
+    }
+  }
+  
+  .table-row {
+    .table-card {
+      .table-header {
+        .table-actions {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+          
+          .batch-reminder-btn {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 加载状态
+.ant-spin-nested-loading {
+  .ant-spin-container {
+    transition: opacity 0.2s ease;
+  }
+}
+
+// 空状态样式
+.ant-table-placeholder {
+  .ant-empty {
+    .ant-empty-description {
+      color: @text-color-disabled;
+      font-size: 13px;
+    }
+  }
+}
+
+// 分页样式（如果需要）
+.ant-pagination {
+  .ant-pagination-item {
+    border-radius: 3px;
+    
+    a {
+      color: @text-color-secondary;
+    }
+    
+    &.ant-pagination-item-active {
+      border-color: @primary-color;
+      
+      a {
+        color: @primary-color;
+      }
+    }
+  }
+}

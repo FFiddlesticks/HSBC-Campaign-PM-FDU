@@ -1,0 +1,5 @@
+__pycache__
+.venv
+doc/mock_data/images
+pdfs
+node_modules
