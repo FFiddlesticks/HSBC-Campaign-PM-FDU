@@ -27,7 +27,7 @@ class Document(BaseModel):
             if not val:
                 return None
             try:
-                return datetime.strptime(val, "%Y/%m/%d").date()
+                return datetime.strptime(val, "%Y-%m-%d").date()
             except Exception:
                 return None
         return cls(
