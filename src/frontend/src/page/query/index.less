@@ -41,58 +41,22 @@
   .search-header {
     margin-bottom: 20px;
     
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    
     .search-title {
       margin: 0 !important;
       color: @text-color;
       font-weight: 600;
     }
-  }
-  
-  .search-content {
-    .search-row {
-      width: 100%;
-      margin-bottom: 16px;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-    
-    .search-field {
-      .field-label {
-        font-size: 14px;
-        color: @text-color;
-        margin-bottom: 6px;
-        font-weight: 500;
-      }
-      
-      .search-input,
-      .search-select,
-      .search-date-picker {
-        width: 240px;
-        
-        &.keyword-input {
-          width: 320px;
-        }
-        
-        &:hover {
-          border-color: @primary-color;
-        }
-        
-        &.ant-input-focused,
-        &.ant-select-focused .ant-select-selector,
-        &.ant-picker-focused {
-          border-color: @primary-color !important;
-          box-shadow: 0 0 0 2px fade(@primary-color, 10%) !important;
-        }
-      }
-    }
     
     .search-actions {
       display: flex;
-      align-items: flex-end;
       gap: 12px;
-      margin-top: 28px;
       
       .search-btn {
         background: @primary-color;
@@ -122,6 +86,86 @@
         &:hover {
           border-color: @primary-color;
           color: @primary-color;
+        }
+      }
+    }
+  }
+  
+  .search-content {
+    .search-row {
+      width: 100%;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+
+      >div{
+        flex: 1;
+      }
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    
+    .search-field {
+      .field-label {
+        font-size: 14px;
+        color: @text-color;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+      
+      .search-input,
+      .search-select,
+      .search-date-picker {
+        width: 260px;
+        
+        &:hover {
+          border-color: @primary-color;
+        }
+        
+        &.ant-input-focused,
+        &.ant-select-focused .ant-select-selector,
+        &.ant-picker-focused {
+          border-color: @primary-color !important;
+          box-shadow: 0 0 0 2px fade(@primary-color, 10%) !important;
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .search-card {
+    .search-header {
+      .header-content {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      
+      .search-actions {
+        width: 100%;
+        justify-content: center;
+        
+        .search-btn,
+        .reset-btn {
+          flex: 1;
+        }
+      }
+    }
+    
+    .search-content {
+      .search-row {
+        flex-direction: column;
+        
+        .search-field {
+          .search-input,
+          .search-select,
+          .search-date-picker {
+            width: 100% !important;
+          }
         }
       }
     }
@@ -310,22 +354,28 @@
   
   .search-card {
     .search-content {
-      .search-field {
-        .search-input,
-        .search-select,
-        .search-date-picker {
-          width: 100% !important;
-        }
-      }
-      
-      .search-actions {
-        width: 100%;
-        justify-content: center;
-        margin-top: 16px;
+      .search-row {
+        flex-direction: column;
         
-        .search-btn,
-        .reset-btn {
-          flex: 1;
+        .search-field {
+          .search-input,
+          .search-select,
+          .search-date-picker {
+            width: 100% !important;
+          }
+        }
+        
+        .search-actions {
+          width: 100%;
+          justify-content: center;
+          margin-top: 16px;
+          margin-left: 0;
+          padding-top: 0;
+          
+          .search-btn,
+          .reset-btn {
+            flex: 1;
+          }
         }
       }
     }

@@ -21,7 +21,7 @@ function Query() {
   const [data, setData] = useState<FileItem[]>([]);
   const [filteredData, setFilteredData] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const [searchConditions, setSearchConditions] = useState({
     title: '',
     fileType: '',
@@ -51,7 +51,7 @@ function Query() {
     try {
       // 构建查询参数
       const queryParams = new URLSearchParams();
-      
+
       if (params) {
         Object.keys(params).forEach(key => {
           if (params[key]) {
@@ -59,13 +59,13 @@ function Query() {
           }
         });
       }
-      const url = `http://127.0.0.1:8000/get${queryParams.size?'?':''}${queryParams.toString()}`;
+      const url = `http://127.0.0.1:8000/get${queryParams.size ? '?' : ''}${queryParams.toString()}`;
       console.log('请求URL:', url);
-      
+
       const response = await fetch(url);
       const result = await response.json();
-      console.log('result.data===',result);
-      
+      console.log('result.data===', result);
+
       if (result.success) {
         setData(result.data || []);
         setFilteredData(result.data || []);
@@ -83,7 +83,7 @@ function Query() {
     }
   };
 
-  async function getData(){
+  async function getData() {
     try {
       const url = `http://127.0.0.1:8000/get`;
       const response = await fetch(url);
@@ -96,15 +96,15 @@ function Query() {
         setData([]);
         setFilteredData([]);
       }
-    }catch(error){
+    } catch (error) {
       console.error(error);
-      
+
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     getData()
-  },[])
+  }, [])
 
   // 表格列配置 - 更新字段名
   const columns: ColumnsType<FileItem> = [
@@ -112,7 +112,7 @@ function Query() {
       title: '文件名',
       dataIndex: 'title',
       key: 'title',
-      width: 200,
+      width: 120,
       render: (text: string) => (
         <div className="file-name-cell">
           <FileTextOutlined className="file-icon" />
@@ -175,27 +175,27 @@ function Query() {
   const handleSearch = () => {
     // 构建请求参数
     const requestParams: any = {};
-    
+
     if (searchConditions.title) {
       requestParams.title = searchConditions.title;
     }
-    
+
     if (searchConditions.fileType) {
       requestParams.fileType = searchConditions.fileType;
     }
-    
+
     if (searchConditions.customer_name) {
       requestParams.customer_name = searchConditions.customer_name;
     }
-    
+
     if (searchConditions.sign_date) {
       requestParams.sign_date = searchConditions.sign_date.format('YYYY-MM-DD');
     }
-    
+
     if (searchConditions.deadline) {
       requestParams.deadline = searchConditions.deadline.format('YYYY-MM-DD');
     }
-    
+
     if (searchConditions.keyWord) {
       requestParams.keyWord = searchConditions.keyWord;
     }
@@ -230,11 +230,31 @@ function Query() {
     <div className="query-page">
       <Card className="search-card" bordered={false}>
         <div className="search-header">
-          <Title level={4} className="search-title">
-            文件查询
-          </Title>
+          <div className="header-content">
+            <Title level={4} className="search-title">
+              文件查询
+            </Title>
+            <div className="search-actions">
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+                className="search-btn"
+                loading={loading}
+              >
+                搜索
+              </Button>
+              <Button
+                icon={<RedoOutlined />}
+                onClick={handleReset}
+                className="reset-btn"
+              >
+                重置
+              </Button>
+            </div>
+          </div>
         </div>
-        
+
         <div className="search-content">
           <Space size="large" wrap className="search-row">
             <div className="search-field">
@@ -247,7 +267,7 @@ function Query() {
                 allowClear
               />
             </div>
-            
+
             <div className="search-field">
               <div className="field-label">文件类型</div>
               <Select
@@ -264,7 +284,7 @@ function Query() {
                 <Option value='5'>应收账款质押协议</Option>
               </Select>
             </div>
-            
+
             <div className="search-field">
               <div className="field-label">客户</div>
               <Input
@@ -276,7 +296,7 @@ function Query() {
               />
             </div>
           </Space>
-          
+
           <Space size="large" wrap className="search-row">
             <div className="search-field">
               <div className="field-label">签署日期</div>
@@ -288,7 +308,7 @@ function Query() {
                 allowClear
               />
             </div>
-            
+
             <div className="search-field">
               <div className="field-label">截止日期</div>
               <DatePicker
@@ -299,7 +319,7 @@ function Query() {
                 allowClear
               />
             </div>
-            
+
             <div className="search-field">
               <div className="field-label">关键字搜索</div>
               <Input
@@ -309,25 +329,6 @@ function Query() {
                 className="search-input keyword-input"
                 allowClear
               />
-            </div>
-            
-            <div className="search-actions">
-              <Button 
-                type="primary" 
-                icon={<SearchOutlined />}
-                onClick={handleSearch}
-                className="search-btn"
-                loading={loading}
-              >
-                搜索
-              </Button>
-              <Button 
-                icon={<RedoOutlined />}
-                onClick={handleReset}
-                className="reset-btn"
-              >
-                重置
-              </Button>
             </div>
           </Space>
         </div>
@@ -342,7 +343,7 @@ function Query() {
             共 <span className="total-count">{filteredData.length}</span> 条记录
           </div>
         </div>
-        
+
         <Table
           columns={columns}
           dataSource={filteredData}

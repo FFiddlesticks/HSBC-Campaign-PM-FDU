@@ -23,7 +23,6 @@ const columns = [
       let statusClass = '';
       if (diff <= 3) statusClass = 'deadline-urgent';
       else if (diff <= 7) statusClass = 'deadline-warning';
-      else if (diff <= 30) statusClass = 'deadline-normal';
       return (
         <Tag className={`deadline-tag ${statusClass}`}>
           {text}
@@ -32,9 +31,9 @@ const columns = [
     },
   },
   {
-    title: '文件编码',
-    dataIndex: 'fileCode',
-    key: 'fileCode',
+    title: '签署日期',
+    dataIndex: 'signDate',
+    key: 'signDate',
   },
   {
     title: '客户名',
