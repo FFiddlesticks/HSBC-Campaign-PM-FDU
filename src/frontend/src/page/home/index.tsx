@@ -11,6 +11,11 @@ const columns = [
     key: 'fileName',
   },
   {
+    title: '签署日期',
+    dataIndex: 'signDate',
+    key: 'signDate',
+  },
+  {
     title: '截止日期',
     dataIndex: 'deadline',
     key: 'deadline',
@@ -29,11 +34,6 @@ const columns = [
         </Tag>
       );
     },
-  },
-  {
-    title: '签署日期',
-    dataIndex: 'signDate',
-    key: 'signDate',
   },
   {
     title: '客户名',
@@ -230,7 +230,7 @@ function Home() {
                 </span>
               </div>
             </div>
-            
+
             <Table
               dataSource={data}
               columns={(() => {
@@ -257,8 +257,8 @@ function Home() {
                     dataIndex: 'status',
                     key: 'status',
                     render: (status: string) => (
-                      status === 'reminded' ? 
-                        <Badge status="success" text="已提醒" className="reminded-badge" /> : 
+                      status === 'reminded' ?
+                        <Badge status="success" text="已提醒" className="reminded-badge" /> :
                         <span className="not-reminded">未提醒</span>
                     ),
                   },
