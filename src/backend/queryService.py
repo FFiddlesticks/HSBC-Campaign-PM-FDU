@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 # Path to data.json (same logic as main.py)
-DATABASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "database", "data.json"))
+DATABASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "database", "data_all.json"))
 
 class Document(BaseModel):
     title: str = Field("")
@@ -27,12 +27,13 @@ class Document(BaseModel):
             if not val:
                 return None
             try:
-                return datetime.strptime(val, "%Y-%m-%d").date()
+                return datetime.strptime(val, "%Y/%m/%d").date()
             except Exception:
                 return None
         return cls(
             title=raw.get("title", ""),
             id=raw.get("id", ""),
+            file_type = raw.get("type", ""),
             customer_name=raw.get("customer_name", ""),
             sign_date=parse_date(raw.get("sign_date")),
             deadline=parse_date(raw.get("deadline")),
