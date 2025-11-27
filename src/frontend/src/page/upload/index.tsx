@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { message, Upload, Modal, Form, Input, Select, DatePicker, Button, Spin, Row, Col } from 'antd';
+import { PDFDocument } from 'pdf-lib';
 
 const { Dragger } = Upload;
 const { Option } = Select;
@@ -13,6 +14,9 @@ function UploadPage() {
     // 智能分割相关状态
     const [splitting, setSplitting] = useState(false);
     const [splitFiles, setSplitFiles] = useState<Array<any>>([]);
+    // 预览相关状态
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewPart, setPreviewPart] = useState<any | null>(null);
 
     // parser 上传器的文件列表（允许从拆分区导入）
     const [parserFileList, setParserFileList] = useState<any[]>([]);
@@ -59,7 +63,7 @@ function UploadPage() {
             }, 120);
         },
 
-        onChange(info) {
+        onChange: async (info) => {
             const { status } = info.file;
             if (status !== 'uploading') {
                 console.log(info.file, info.fileList);
@@ -115,33 +119,74 @@ function UploadPage() {
             }, 150);
         },
 
-        onChange(info) {
+        onChange: async (info) => {
             const { status } = info.file;
             if (status === 'done') {
                 message.success(`${info.file.name} 上传成功，开始智能分页`);
                 setSplitting(true);
+                // 尝试使用 pdf-lib 在前端按页拆分（本地演示用途）
+                try {
+                    const fileObj = info.file.originFileObj || info.file;
+                    if (!fileObj || !(fileObj instanceof File)) {
+                        throw new Error('无法获取上传的文件对象，切回模拟拆分');
+                    }
 
-                // 功能：模拟后端拆分：创建2-4个假分段
-                const parts = Math.max(2, Math.floor(Math.random() * 4) + 1);
-                setTimeout(() => {
-                    const results: any[] = [];
-                    const totalPages = Math.max(6, Math.floor(Math.random() * 20) + 6);
+                    const arrayBuffer = await fileObj.arrayBuffer();
+                    const srcPdf = await PDFDocument.load(arrayBuffer);
+                    const totalPages = srcPdf.getPageCount();
+
+                    const parts = Math.max(2, Math.floor(Math.random() * 4) + 1);
                     const pagesPerPart = Math.max(1, Math.floor(totalPages / parts));
                     let currentStart = 1;
+                    const results: any[] = [];
+
                     for (let i = 1; i <= parts; i++) {
                         const start = currentStart;
                         const end = (i === parts) ? totalPages : Math.min(totalPages, currentStart + pagesPerPart - 1);
                         currentStart = end + 1;
+
                         const partName = `${info.file.name.replace(/\.pdf$/i, '')}_part_${i}.pdf`;
-                        const blob = new Blob([`This is simulated split ${i} of ${info.file.name} (pages ${start}-${end})`], { type: 'application/pdf' });
-                        const fileObj = new File([blob], partName, { type: 'application/pdf' });
+                        const newPdf = await PDFDocument.create();
+                        const indices: number[] = [];
+                        for (let p = start; p <= end; p++) indices.push(p - 1);
+                        const copied = await newPdf.copyPages(srcPdf, indices);
+                        copied.forEach(pg => newPdf.addPage(pg));
+
+                        const bytes = await newPdf.save();
+                        const blob = new Blob([bytes as any], { type: 'application/pdf' });
+                        const filePart = new File([blob], partName, { type: 'application/pdf' });
                         const url = URL.createObjectURL(blob);
-                        results.push({ id: `${Date.now()}-${i}`, name: partName, size: blob.size, file: fileObj, url, pages: { start, end } });
+                        results.push({ id: `${Date.now()}-${i}`, name: partName, size: blob.size, file: filePart, url, pages: { start, end } });
                     }
-                    setSplitFiles(results);
-                    setSplitting(false);
-                    message.success('智能拆分完成，已生成分段预览');
-                }, 3000);
+
+                    setTimeout(() => {
+                        setSplitFiles(results);
+                        setSplitting(false);
+                        message.success('智能拆分完成，已生成分段预览');
+                    }, 500); // 小延迟让用户看到上传进度
+                } catch (err) {
+                    console.warn('本地拆分失败，使用回退模拟拆分：', err);
+                    const parts = Math.max(2, Math.floor(Math.random() * 4) + 1);
+                    setTimeout(() => {
+                        const results: any[] = [];
+                        const totalPages = Math.max(6, Math.floor(Math.random() * 20) + 6);
+                        const pagesPerPart = Math.max(1, Math.floor(totalPages / parts));
+                        let currentStart = 1;
+                        for (let i = 1; i <= parts; i++) {
+                            const start = currentStart;
+                            const end = (i === parts) ? totalPages : Math.min(totalPages, currentStart + pagesPerPart - 1);
+                            currentStart = end + 1;
+                            const partName = `${info.file.name.replace(/\.pdf$/i, '')}_part_${i}.pdf`;
+                            const blob = new Blob([`This is simulated split ${i} of ${info.file.name} (pages ${start}-${end})`], { type: 'application/pdf' });
+                            const fileObj = new File([blob], partName, { type: 'application/pdf' });
+                            const url = URL.createObjectURL(blob);
+                            results.push({ id: `${Date.now()}-${i}`, name: partName, size: blob.size, file: fileObj, url, pages: { start, end } });
+                        }
+                        setSplitFiles(results);
+                        setSplitting(false);
+                        message.success('智能拆分完成，已生成分段预览');
+                    }, 3000);
+                }
             } else if (status === 'error') {
                 message.error(`${info.file.name} 上传失败。`);
             }
@@ -225,7 +270,12 @@ function UploadPage() {
                         <h3 style={{ margin: 0 }}>智能文件拆分</h3>
                         {splitFiles && splitFiles.length > 0 && !splitting && (
                             <div style={{ fontSize: 12 }}>
-                                <a onClick={() => { setSplitFiles([]); message.success('已清空拆分结果，可重新上传'); }}>重新上传</a>
+                                <a onClick={() => { 
+                                    // 清理掉之前生成的 objectURLs
+                                    splitFiles.forEach(p => { if (p.url) try { URL.revokeObjectURL(p.url); } catch (e) {} });
+                                    setSplitFiles([]); 
+                                    message.success('已清空拆分结果，可重新上传'); 
+                                }}>重新上传</a>
                             </div>
                         )}
                     </div>
@@ -249,7 +299,13 @@ function UploadPage() {
                                     <div key={part.id} style={{ padding: 12, border: '1px solid #eee', borderRadius: 6, width: 260 }}>
                                         <div style={{ fontWeight: 600 }}>{part.name}</div>
                                             <div style={{ color: '#888', fontSize: 12, marginBottom: 8 }}>{(part.size/1024).toFixed(1)} KB · <span style={{ color: '#555' }}>Preview P{part.pages?.start}-{part.pages?.end}</span></div>
-                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <div style={{ display: 'flex', gap: 8 }}>
+                                            {/* 新增：预览按钮（下载左侧） */}
+                                            <Button size="small" disabled={!(part.url || part.downloadUrl)} onClick={() => {
+                                                if (!(part.url || part.downloadUrl)) return message.warning('没有可用的预览地址');
+                                                setPreviewPart(part);
+                                                setPreviewVisible(true);
+                                            }}>预览</Button>
                                             {/* 暂时屏蔽 */}
                                             {/* <Button size="small" onClick={() => {
                                                 const uid = `-part-${Date.now()}`;
@@ -263,13 +319,19 @@ function UploadPage() {
                                                 message.success('已将拆分文件加入解析队列');
                                             }}>导入解析</Button> */}
                                             <Button size="small" onClick={() => {
+                                                const href = part.url || part.downloadUrl;
+                                                if (!href) return message.warning('无法下载（没有可用下载地址）');
                                                 const a = document.createElement('a');
-                                                a.href = part.url;
+                                                a.href = href;
                                                 a.download = part.name;
                                                 a.click();
-                                                URL.revokeObjectURL(part.url);
+                                                // 如果是本地生成的 objectURL，尝试释放
+                                                if (part.url && href === part.url) {
+                                                    try { URL.revokeObjectURL(part.url); } catch (e) {}
+                                                }
                                             }}>下载</Button>
                                                 <Button size="small" danger onClick={() => {
+                                                    try { if (part.url) URL.revokeObjectURL(part.url); } catch (e) {}
                                                     setSplitFiles(prev => prev.filter(p => p.id !== part.id));
                                                 }}>移除</Button>
                                         </div>
@@ -286,13 +348,57 @@ function UploadPage() {
                                 }}>全部导入解析</Button> */}
                                 <Button style={{ marginLeft: 8 }} size="small" onClick={() => {
                                     splitFiles.forEach(part => {
+                                        const href = part.url || part.downloadUrl;
+                                        if (!href) return;
                                         const a = document.createElement('a');
-                                        a.href = part.url;
+                                        a.href = href;
                                         a.download = part.name;
                                         a.click();
+                                        if (part.url && href === part.url) {
+                                            try { URL.revokeObjectURL(part.url); } catch (e) {}
+                                        }
                                     });
                                 }}>全部下载</Button>
                             </div>
+                            {/* 预览弹窗（用于展示拆分后的文件内容或对应页码） */}
+                            <Modal
+                                title={previewPart ? `预览：${previewPart.name}  (P${previewPart.pages?.start}-${previewPart.pages?.end})` : '预览'}
+                                visible={previewVisible}
+                                onCancel={() => { setPreviewVisible(false); setPreviewPart(null); }}
+                                footer={null}
+                                width={900}
+                                destroyOnClose
+                            >
+                                {previewPart ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div style={{ color: '#555' }}>预览拆分后的文件—对应原文件页码：{`P${previewPart.pages?.start}-${previewPart.pages?.end}`}</div>
+                                            <div>
+                                                <Button size="small" style={{ marginRight: 8 }} onClick={() => {
+                                                    const href = previewPart.url || previewPart.downloadUrl;
+                                                    if (!href) return message.warning('没有可用的下载地址');
+                                                    const a = document.createElement('a');
+                                                    a.href = href;
+                                                    a.download = previewPart.name;
+                                                    a.click();
+                                                    if (previewPart.url && href === previewPart.url) try { URL.revokeObjectURL(previewPart.url); } catch (e) {}
+                                                }}>下载</Button>
+                                                <Button size="small" onClick={() => {
+                                                    const href = previewPart.url || previewPart.downloadUrl;
+                                                    if (!href) return message.warning('没有可用的地址');
+                                                    window.open(href, '_blank');
+                                                }}>在新标签页打开</Button>
+                                            </div>
+                                        </div>
+                                        {/* 尝试用 iframe 嵌入 pdf/文件 url，若浏览器支持会直接渲染 PDF */}
+                                                <div style={{ width: '100%', height: 600, border: '1px solid #eee' }}>
+                                                    <iframe title={previewPart.name} src={previewPart.url || previewPart.downloadUrl} style={{ width: '100%', height: '100%', border: 0 }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>没有可预览的文件</div>
+                                )}
+                            </Modal>
                         </div>
                     )}
                 </div>
@@ -376,11 +482,12 @@ function UploadPage() {
                                     <Input />
                                 </Form.Item>
                             </Col>
-                            <Col span={12}>
+                            {/* 文件ID展示暂时屏蔽 */}
+                            {/* <Col span={12}>
                                 <Form.Item label="文件ID" name="fileId">
                                     <Input />
                                 </Form.Item>
-                            </Col>
+                            </Col> */}
                         </Row>
 
                         <Row gutter={16}>
