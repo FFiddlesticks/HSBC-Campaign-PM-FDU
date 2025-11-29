@@ -67,11 +67,16 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <input
+            <input
             type="password"
             placeholder="密码"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+              handleLogin();
+              }
+            }}
             style={{
               width: '100%',
               padding: '10px 12px',
@@ -79,7 +84,7 @@ const LoginPage: React.FC = () => {
               borderRadius: 4,
               border: '1px solid #d9e2ea'
             }}
-          />
+            />
         </div>
 
         <div style={{ marginTop: 6 }}>
