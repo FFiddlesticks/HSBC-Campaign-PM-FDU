@@ -57,7 +57,6 @@ function Home() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [dataSource,setDataSource]=useState(dataSourceList[1])
   const isUpload=useSelector(state=>(state as any)?.data?.isUpload)
-  console.log('isUpload===',isUpload);
   
   // const [data, setData] = useState(
   //   dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
