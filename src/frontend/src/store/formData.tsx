@@ -2,22 +2,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface CounterState {
-  isUpload:boolean
+  newDashBoardData:any
 }
 
 const initialState: CounterState = {
-  isUpload:false
+  newDashBoardData:[[],[],[],[]]
 }
 
 export const counterSlice = createSlice({
   name: 'counter',
   initialState,
   reducers: {
-    updateUploadStatus: (state, action: PayloadAction<boolean>) => {
-      state. isUpload= action.payload
+    updateNewDashBoardData: (state, action: PayloadAction<any>) => {
+      state. newDashBoardData= action.payload
     },
   }
 })
 
-export const { updateUploadStatus } = counterSlice.actions
+export const { updateNewDashBoardData } = counterSlice.actions
 export default counterSlice.reducer
