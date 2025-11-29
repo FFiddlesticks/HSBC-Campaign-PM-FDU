@@ -11,10 +11,21 @@ from pydantic import BaseModel, Field
 # Path to data.json (same logic as main.py)
 DATABASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "database", "data_all.json"))
 
+def getFileTypeStr(type_name: str) -> str:
+    type_mapping = {
+        '安慰函': '1',
+        '保证金担保合同': '2',
+        '个人保证书': '3',
+        '公司保证书': '4',
+        '应收账款质押协议': '5'
+    }
+    return type_mapping[type_name]
+
 class Document(BaseModel):
     title: str = Field("")
     id: str = Field("")
     customer_name: str = Field("")
+    file_type: str = Field("") 
     sign_date: Optional[date] = None
     deadline: Optional[date] = None
     source_path: Optional[str] = None
@@ -33,7 +44,7 @@ class Document(BaseModel):
         return cls(
             title=raw.get("title", ""),
             id=raw.get("id", ""),
-            file_type = raw.get("type", ""),
+            file_type = getFileTypeStr(raw.get("type", "")),
             customer_name=raw.get("customer_name", ""),
             sign_date=parse_date(raw.get("sign_date")),
             deadline=parse_date(raw.get("deadline")),
@@ -79,106 +90,47 @@ def startup_event():
     _CACHE = _load_cache()
     print(f"Loaded {len(_CACHE)} documents into cache from {DATABASE_PATH}")
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "cached": len(_CACHE)}
-
-@app.post("/reload")
-def reload_cache():
-    global _CACHE
-    _CACHE = _load_cache()
-    return {"status": "reloaded", "cached": len(_CACHE)}
-
 @app.get("/get", response_model=DataResponse)
 def get_document(
     title: Optional[str] = Query(None, description="标题 (模糊匹配)"),
     id: Optional[str] = Query(None, description="文档编号 (模糊匹配)"),
     customer_name: Optional[str] = Query(None, description="客户名称 (模糊匹配)"),
+    fileType: Optional[str] = Query(None, description="文件类型 (精确匹配)"),
     sign_date: Optional[date] = Query(None, description="签署日期 精确匹配 YYYY-MM-DD"),
     deadline: Optional[date] = Query(None, description="截止日期 精确匹配 YYYY-MM-DD"),
     timestamp: Optional[int] = Query(None, description="时间戳 精确匹配"),
-    limit: int = Query(1000, ge=1, le=5000, description="最大返回条数 (针对多匹配场景)")
+    limit: int = Query(1000, ge=1, le=5000, description="最大返回条数")
 ):
-    """Return ALL records whose ANY of the provided fields matches (OR semantics).
-
-    Previously this endpoint returned only the first match; now it aggregates all
-    matches up to `limit`. If no documents match, return 404.
-    """
-    if not any([title, id, customer_name, sign_date, deadline, timestamp]):
+    if not any([title, id, customer_name, fileType, sign_date, deadline, timestamp]):
         return DataResponse(data=_CACHE)
 
     def fuzzy(field: Optional[str], pattern: Optional[str]) -> bool:
-        if pattern is None:
-            return False
-        if not field:
-            return False
-        return pattern.lower() in field.lower()
-
-    matches: List[Document] = []
-    for doc in _CACHE:
-        deadline_match = False
-        if deadline is not None:
-            if doc.deadline is not None and doc.deadline <= deadline:
-                deadline_match = True
-        if (
-            fuzzy(doc.title, title)
-            or fuzzy(doc.id, id)
-            or fuzzy(doc.customer_name, customer_name)
-            or (sign_date and doc.sign_date == sign_date)
-            or deadline_match
-            or (timestamp and doc.timestamp == timestamp)
-        ):
-            matches.append(doc)
-            if len(matches) >= limit:
-                break
-
-    if not matches:
-        raise HTTPException(status_code=404, detail="No matching document")
-    return DataResponse(data=matches)
-
-@app.get("/search", response_model=DataResponse)
-def search(
-    customer_name: Optional[str] = Query(None, description="客户名称 (模糊匹配, case-insensitive)"),
-    title: Optional[str] = Query(None, description="文档标题 (模糊匹配)"),
-    doc_id: Optional[str] = Query(None, alias="id", description="文档编号 (模糊匹配)"),
-    sign_date_from: Optional[date] = Query(None, description="签署开始日期 YYYY-MM-DD"),
-    sign_date_to: Optional[date] = Query(None, description="签署结束日期 YYYY-MM-DD"),
-    deadline_from: Optional[date] = Query(None, description="截止开始日期 YYYY-MM-DD"),
-    deadline_to: Optional[date] = Query(None, description="截止结束日期 YYYY-MM-DD"),
-    limit: int = Query(200, ge=1, le=1000, description="最大返回记录数")
-):
-    if limit <= 0:
-        raise HTTPException(status_code=400, detail="limit must be > 0")
-
-    def match_text(field: Optional[str], pattern: Optional[str]) -> bool:
         if pattern is None:
             return True
         if not field:
             return False
         return pattern.lower() in field.lower()
 
-    results: List[Document] = []
-    for doc in _CACHE:
-        if not match_text(doc.customer_name, customer_name):
-            continue
-        if not match_text(doc.title, title):
-            continue
-        if not match_text(doc.id, doc_id):
-            continue
-        # Date range checks
-        if sign_date_from and (doc.sign_date is None or doc.sign_date < sign_date_from):
-            continue
-        if sign_date_to and (doc.sign_date is None or doc.sign_date > sign_date_to):
-            continue
-        if deadline_from and (doc.deadline is None or doc.deadline < deadline_from):
-            continue
-        if deadline_to and (doc.deadline is None or doc.deadline > deadline_to):
-            continue
-        results.append(doc)
-        if len(results) >= limit:
-            break
+    matches: List[Document] = []
+    for storage in _CACHE:
+        deadline_match = True
+        if deadline is not None:
+            if storage.deadline is not None and storage.deadline > deadline:
+                deadline_match = False
+        if (fuzzy(storage.title, title) and
+            fuzzy(storage.id, id) and
+            fuzzy(storage.customer_name, customer_name) and
+            (fileType is None or storage.file_type == fileType) and
+            (sign_date is None or storage.sign_date == sign_date) and
+            deadline_match and
+            (timestamp is None or storage.timestamp == timestamp)):
+                matches.append(storage)
+                if len(matches) >= limit:
+                    break
 
-    return DataResponse(data=results)
+    if not matches:
+        raise HTTPException(status_code=404, detail="No matching document")
+    return DataResponse(data=matches)
 
 if __name__ == "__main__":
     # Convenience local run
