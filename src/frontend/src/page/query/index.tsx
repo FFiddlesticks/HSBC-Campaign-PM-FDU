@@ -122,8 +122,8 @@ function Query() {
     },
     {
       title: '文件类型',
-      dataIndex: 'file_type',
-      key: 'file_type',
+      dataIndex: 'type',
+      key: 'type',
       width: 120,
       render: (type: string) => (
         <Tag className={`file-type-tag file-type-${type}`}>
