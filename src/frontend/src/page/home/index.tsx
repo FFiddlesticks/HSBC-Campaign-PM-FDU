@@ -1,8 +1,9 @@
 import { Button, Card, Col, Row, Table, message, Tag, Badge, Modal, Input, Form } from 'antd';
 import ReactECharts from 'echarts-for-react';
 import './index.less';
-import { dataSource } from './../../const/mock'
+// import { dataSource } from './../../const/mock'
 import { useState } from 'react';
+import { dataSourceList } from './../../const/dashBoardData';
 
 const columns = [
   {
@@ -48,12 +49,15 @@ const columns = [
   },
 ];
 
+const cloumnsDat=[[19, 0, 0, 2, 9, 7, 0, 0, 0, 0, 0, 0],[20, 0, 0, 2, 10, 8, 0, 0, 0, 0, 0, 0]]
+
 function Home() {
   const [filedId, setFieldId] = useState(1);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [data, setData] = useState(
-    dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
-  );
+  const [dataSource,setDataSource]=useState(dataSourceList[1])
+  // const [data, setData] = useState(
+  //   dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
+  // );
   const [sending, setSending] = useState(false);
   // 邮件草稿状态
   const [emailModalVisible, setEmailModalVisible] = useState(false);
@@ -131,7 +135,7 @@ function Home() {
       {
         name: '到期文档',
         type: 'bar',
-        data: [120, 200, 150, 80, 70, 110, 130, 120, 200, 150, 80, 70],
+        data: cloumnsDat[1],
         itemStyle: {
           color: '#1890ff'
         }
@@ -146,10 +150,11 @@ function Home() {
   };
 
   const field = ['1天内', '7天内', '30天内', '90天内'];
-  const fieldCount = [5, 20, 40, 200];
+  // const fieldCount = [5, 20, 40, 200];
 
   const selectField = (idx: number) => {
     setFieldId(idx);
+    setDataSource(dataSourceList[idx])
     setSelectedRowKeys([]);
   };
 
@@ -159,7 +164,7 @@ function Home() {
       return;
     }
     const selectedKeySet = new Set(selectedRowKeys.map(k => String(k)));
-    const selectedRecords = data.filter((it: any) => selectedKeySet.has(String(it.fileCode ?? it.key)));
+    const selectedRecords = dataSource.filter((it: any) => selectedKeySet.has(String(it.fileCode ?? it.key)));
     sendReminder(selectedRecords, 'batch');
   };
 
@@ -188,7 +193,7 @@ function Home() {
             </div>
             <div className="summary-content">
               <h3 className="summary-title">
-                最近{field[filedId]}，有 <span className="highlight-count">{fieldCount[filedId]}</span> 份文件即将到期
+                最近{field[filedId]}，有 <span className="highlight-count">{dataSource.length}</span> 份文件即将到期
               </h3>
               <span className="summary-desc">请及时处理这些即将到期的文件</span>
             </div>
@@ -200,7 +205,7 @@ function Home() {
         <Col span={24}>
           <Card className="chart-card">
             <div className="chart-header">
-              <h4 className="chart-title">未来12周到期文件统计</h4>
+              <h4 className="chart-title">未来90天到期文件统计</h4>
             </div>
             <ReactECharts
               option={barChartOption}
@@ -232,7 +237,7 @@ function Home() {
             </div>
 
             <Table
-              dataSource={data}
+              dataSource={dataSource}
               columns={(() => {
                 return [
                   ...columns.slice(0, 4),
@@ -282,7 +287,7 @@ function Home() {
                 setTimeout(() => {
                   const codes = emailTargets.map(r => String(r.fileCode ?? r.key));
                   const codeSet = new Set(codes);
-                  setData(prev => prev.map((it: any) => (codeSet.has(String(it.fileCode ?? it.key)) ? { ...it, status: 'reminded' } : it)));
+                  setDataSource(prev => prev.map((it: any) => (codeSet.has(String(it.fileCode ?? it.key)) ? { ...it, status: 'reminded' } : it)));
                   setEmailModalVisible(false);
                   setSending(false);
                   setSelectedRowKeys([]);
