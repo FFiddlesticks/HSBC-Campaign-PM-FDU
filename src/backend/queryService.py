@@ -11,10 +11,21 @@ from pydantic import BaseModel, Field
 # Path to data.json (same logic as main.py)
 DATABASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "database", "data_all.json"))
 
+def getFileTypeStr(type_name: str) -> str:
+    type_mapping = {
+        '安慰函': '1',
+        '保证金担保合同': '2',
+        '个人保证书': '3',
+        '公司保证书': '4',
+        '应收账款质押协议': '5'
+    }
+    return type_mapping[type_name]
+
 class Document(BaseModel):
     title: str = Field("")
     id: str = Field("")
     customer_name: str = Field("")
+    file_type: str = Field("") 
     sign_date: Optional[date] = None
     deadline: Optional[date] = None
     source_path: Optional[str] = None
@@ -33,7 +44,7 @@ class Document(BaseModel):
         return cls(
             title=raw.get("title", ""),
             id=raw.get("id", ""),
-            file_type = raw.get("type", ""),
+            file_type = getFileTypeStr(raw.get("type", "")),
             customer_name=raw.get("customer_name", ""),
             sign_date=parse_date(raw.get("sign_date")),
             deadline=parse_date(raw.get("deadline")),
@@ -94,43 +105,34 @@ def get_document(
     title: Optional[str] = Query(None, description="标题 (模糊匹配)"),
     id: Optional[str] = Query(None, description="文档编号 (模糊匹配)"),
     customer_name: Optional[str] = Query(None, description="客户名称 (模糊匹配)"),
+    fileType: Optional[str] = Query(None, description="文件类型 (精确匹配)"),
     sign_date: Optional[date] = Query(None, description="签署日期 精确匹配 YYYY-MM-DD"),
     deadline: Optional[date] = Query(None, description="截止日期 精确匹配 YYYY-MM-DD"),
     timestamp: Optional[int] = Query(None, description="时间戳 精确匹配"),
-    limit: int = Query(1000, ge=1, le=5000, description="最大返回条数 (针对多匹配场景)")
+    limit: int = Query(1000, ge=1, le=5000, description="最大返回条数")
 ):
-    """Return ALL records whose ANY of the provided fields matches (OR semantics).
-
-    Previously this endpoint returned only the first match; now it aggregates all
-    matches up to `limit`. If no documents match, return 404.
-    """
-    if not any([title, id, customer_name, sign_date, deadline, timestamp]):
+    if not any([title, id, customer_name, fileType, sign_date, deadline, timestamp]):
         return DataResponse(data=_CACHE)
 
     def fuzzy(field: Optional[str], pattern: Optional[str]) -> bool:
         if pattern is None:
-            return False
+            return True
         if not field:
             return False
         return pattern.lower() in field.lower()
 
     matches: List[Document] = []
-    for doc in _CACHE:
-        deadline_match = False
-        if deadline is not None:
-            if doc.deadline is not None and doc.deadline <= deadline:
-                deadline_match = True
-        if (
-            fuzzy(doc.title, title)
-            or fuzzy(doc.id, id)
-            or fuzzy(doc.customer_name, customer_name)
-            or (sign_date and doc.sign_date == sign_date)
-            or deadline_match
-            or (timestamp and doc.timestamp == timestamp)
-        ):
-            matches.append(doc)
-            if len(matches) >= limit:
-                break
+    for storage in _CACHE:
+        if (fuzzy(storage.title, title) and
+            fuzzy(storage.id, id) and
+            fuzzy(storage.customer_name, customer_name) and
+            (fileType is None or storage.file_type == fileType) and
+            (sign_date is None or storage.sign_date == sign_date) and
+            (deadline is None or storage.deadline == deadline) and
+            (timestamp is None or storage.timestamp == timestamp)):
+                matches.append(storage)
+                if len(matches) >= limit:
+                    break
 
     if not matches:
         raise HTTPException(status_code=404, detail="No matching document")
