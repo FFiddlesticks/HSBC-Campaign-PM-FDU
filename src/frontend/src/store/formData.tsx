@@ -2,27 +2,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface CounterState {
-  id?: number,
-  info:any,
+  isUpload:boolean
 }
 
 const initialState: CounterState = {
-  id: undefined,
-  info:{}
+  isUpload:false
 }
 
 export const counterSlice = createSlice({
   name: 'counter',
   initialState,
   reducers: {
-    updateId: (state, action: PayloadAction<number>) => {
-      state.id = action.payload
+    updateUploadStatus: (state, action: PayloadAction<boolean>) => {
+      state. isUpload= action.payload
     },
-    updateInfo:(state, action: PayloadAction<any>)=>{
-        state.info = action.payload
-    }
   }
 })
 
-export const { updateId } = counterSlice.actions
+export const { updateUploadStatus } = counterSlice.actions
 export default counterSlice.reducer

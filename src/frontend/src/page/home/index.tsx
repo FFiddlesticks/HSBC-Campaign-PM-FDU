@@ -3,7 +3,8 @@ import ReactECharts from 'echarts-for-react';
 import './index.less';
 // import { dataSource } from './../../const/mock'
 import { useState } from 'react';
-import { dataSourceList } from './../../const/dashBoardData';
+import { dataSourceList, dataSourceListPre } from './../../const/dashBoardData';
+import { useSelector } from 'react-redux';
 
 const columns = [
   {
@@ -55,6 +56,9 @@ function Home() {
   const [filedId, setFieldId] = useState(1);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [dataSource,setDataSource]=useState(dataSourceList[1])
+  const isUpload=useSelector(state=>(state as any)?.data?.isUpload)
+  console.log('isUpload===',isUpload);
+  
   // const [data, setData] = useState(
   //   dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
   // );
@@ -135,7 +139,7 @@ function Home() {
       {
         name: '到期文档',
         type: 'bar',
-        data: cloumnsDat[1],
+        data: isUpload?cloumnsDat[1]:cloumnsDat[0],
         itemStyle: {
           color: '#1890ff'
         }
@@ -154,7 +158,7 @@ function Home() {
 
   const selectField = (idx: number) => {
     setFieldId(idx);
-    setDataSource(dataSourceList[idx])
+    setDataSource(isUpload?dataSourceList[idx]:dataSourceListPre[idx])
     setSelectedRowKeys([]);
   };
 
