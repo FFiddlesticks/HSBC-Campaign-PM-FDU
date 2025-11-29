@@ -116,12 +116,16 @@ def get_document(
 
     matches: List[Document] = []
     for doc in _CACHE:
+        deadline_match = False
+        if deadline is not None:
+            if doc.deadline is not None and doc.deadline <= deadline:
+                deadline_match = True
         if (
             fuzzy(doc.title, title)
             or fuzzy(doc.id, id)
             or fuzzy(doc.customer_name, customer_name)
             or (sign_date and doc.sign_date == sign_date)
-            or (deadline and doc.deadline == deadline)
+            or deadline_match
             or (timestamp and doc.timestamp == timestamp)
         ):
             matches.append(doc)
