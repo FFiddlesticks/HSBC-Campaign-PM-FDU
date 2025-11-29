@@ -105,7 +105,7 @@ def get_document(
     matches up to `limit`. If no documents match, return 404.
     """
     if not any([title, id, customer_name, sign_date, deadline, timestamp]):
-        raise HTTPException(status_code=400, detail="At least one query parameter required")
+        return DataResponse(data=_CACHE)
 
     def fuzzy(field: Optional[str], pattern: Optional[str]) -> bool:
         if pattern is None:
