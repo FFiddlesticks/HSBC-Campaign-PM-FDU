@@ -1,7 +1,6 @@
 import { Button, Card, Col, Row, Table, message, Tag, Badge, Modal, Input, Form } from 'antd';
 import ReactECharts from 'echarts-for-react';
 import './index.less';
-// import { dataSource } from './../../const/mock'
 import { useEffect, useState } from 'react';
 import { dataSourceListPre } from './../../const/dashBoardData';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,19 +42,13 @@ const columns = [
         </Tag>
       );
     },
-    defaultSortOrder: 'ascend', // 默认升序（日期近的上面）
+    defaultSortOrder: 'ascend',
     sorter: (a: any, b: any) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
   },
   {
     title: '客户名',
     dataIndex: 'clientName',
     key: 'clientName',
-  },
-  // 操作 列 — 单行发送行为将在组件内部处理（以便更新状态）
-  {
-    title: '操作',
-    key: 'action',
-    render: () => null,
   },
 ];
 
@@ -64,71 +57,53 @@ const cloumnsDat = [[19, 0, 0, 2, 9, 7, 0, 0, 0, 0, 0, 0], [20, 0, 0, 2, 10, 8, 
 function Home() {
   const [filedId, setFieldId] = useState(1);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  // 添加 dataSourceList 状态管理
-  // const [dataSourceListState, setDataSourceListState] = useState(dataSourceListPre);
   const [dataSource, setDataSource] = useState(dataSourceListPre[1])
   const newDashBoardData = useSelector(state => (state as any)?.data?.newDashBoardData)
   const dataSourceListState = useSelector(state => (state as any)?.data?.dataSourceListState)
 
   const dispatch = useDispatch()
 
-  console.log('dataSourceListState==', dataSourceListState);
-  console.log('dataSource===', dataSource);
+  const [sending, setSending] = useState(false);
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
+  const [emailTargets, setEmailTargets] = useState<any[]>([]);
+  const [emailType, setEmailType] = useState<'single' | 'batch'>('single');
+  const [emailDraft, setEmailDraft] = useState({ to: localStorage.getItem('authUser') || '', cc: '', subject: '', body: '' });
 
+  // 处理新数据更新
   useEffect(() => {
     if (!newDashBoardData || !Array.isArray(newDashBoardData)) return;
+    
     const prevDataSourceList = cloneDeep(dataSourceListState)
-    // 基于前一个状态创建深拷贝
-    const updatedDataSource = prevDataSourceList.map((arr:any) => [...arr]);
+    const updatedDataSource = prevDataSourceList.map((arr: any) => [...arr]);
 
-    // 遍历四天的数据
     newDashBoardData.forEach((newItem, dayIndex) => {
-      // 检查dayIndex是否有效
       if (dayIndex < 0 || dayIndex > 3) return;
-
-      // 如果是空对象 {}，则跳过
       if (!newItem || typeof newItem !== 'object' || Object.keys(newItem).length === 0) return;
 
       const { fileName } = newItem;
       if (!fileName) return;
 
       const targetArray = updatedDataSource[dayIndex];
-
-      // 在当前天的目标数组中查找是否已存在相同文件名的项
-      const existingIndex = targetArray.findIndex((existingItem:any) =>
+      const existingIndex = targetArray.findIndex((existingItem: any) =>
         existingItem.fileName === fileName
       );
 
       if (existingIndex === -1) {
-        // 如果不存在，添加新项
         targetArray.push(newItem);
       } else {
-        // 如果已存在，更新该项
         targetArray[existingIndex] = newItem;
       }
     });
 
     dispatch(updateDataSourceListState(updatedDataSource))
-
   }, [newDashBoardData]);
 
-  // 当 dataSourceListState 更新时，同步更新当前显示的 dataSource
+  // 同步当前显示的 dataSource
   useEffect(() => {
     setDataSource(dataSourceListState[filedId]);
   }, [dataSourceListState, filedId]);
 
-  // const [data, setData] = useState(
-  //   dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
-  // );
-  const [sending, setSending] = useState(false);
-  // 邮件草稿状态
-  const [emailModalVisible, setEmailModalVisible] = useState(false);
-  const [emailTargets, setEmailTargets] = useState<any[]>([]); // target records
-  const [emailType, setEmailType] = useState<'single' | 'batch'>('single');
-  const [emailDraft, setEmailDraft] = useState({ to: localStorage.getItem('authUser') || '', cc: '', subject: '', body: '' });
-
-  // 单条或批量发送提醒并更新状态（模拟 2s 后端）
-  // 打开发送邮件草稿窗口（单条或批量）
+  // 打开发送邮件草稿窗口
   const sendReminder = (target: any, type: 'single' | 'batch' = 'single') => {
     setEmailType(type);
     const targets = type === 'single' ? [target] : (target || []);
@@ -137,18 +112,16 @@ function Home() {
     // 生成默认主题和正文
     const fileNames = targets.map((t: any) => t.fileName).filter(Boolean);
     let subject = '';
-    if (type === 'single') subject = `【Reminder: ${fileNames[0] || 'Document'}】`;
-    else {
+    if (type === 'single') {
+      subject = `【Reminder: ${fileNames[0] || 'Document'}】`;
+    } else {
       const snippet = fileNames.slice(0, 3).join(', ');
-      // 三个以上文件名时加省略号
       subject = `[Expiration Reminder: ${snippet}${fileNames.length > 3 ? '...' : ''}]`;
     }
 
     const recipient = localStorage.getItem('authUser') || '';
     const lines = [] as string[];
     if (type === 'single') {
-      // lines.push('Dear Client,');
-      // lines.push('');
       lines.push(`This is a gentle reminder regarding the document "${fileNames[0] || 'Document'}".`);
       lines.push('According to our records, this document is approaching its expiry date.');
       lines.push('');
@@ -177,7 +150,77 @@ function Home() {
     setEmailModalVisible(true);
   };
 
-  // 柱状图配置选项 - 使用更柔和的颜色
+  // 批量发送提醒
+  const handleBatchReminder = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要发送提醒的文件');
+      return;
+    }
+    
+    console.log('选中的行keys:', selectedRowKeys);
+    console.log('当前数据源长度:', dataSource.length);
+    
+    // 使用 fileName 进行匹配，因为 rowKey 使用的是 fileName
+    const selectedRecords = dataSource.filter((it: any) => 
+      selectedRowKeys.includes(it.fileName)
+    );
+    
+    console.log('匹配的记录:', selectedRecords);
+    
+    if (selectedRecords.length === 0) {
+      message.error('未找到匹配的记录，请检查数据');
+      return;
+    }
+    
+    if (selectedRecords.length !== selectedRowKeys.length) {
+      console.warn(`部分记录未找到: 选中${selectedRowKeys.length}个，找到${selectedRecords.length}个`);
+    }
+    
+    sendReminder(selectedRecords, 'batch');
+  };
+
+  // 发送邮件确认处理
+  const handleSendEmail = () => {
+    setSending(true);
+    message.loading({ content: '发送邮件中...', key: 'mailSending', duration: 0 });
+    
+    setTimeout(() => {
+      try {
+        // 使用 fileName 作为唯一标识进行匹配
+        const fileNames = emailTargets.map(r => r.fileName);
+        const fileNameSet = new Set(fileNames);
+        
+        console.log('要标记为已提醒的文件:', fileNames);
+        
+        // 更新 Redux 状态
+        const updatedDataSourceList = dataSourceListState.map((arr: any[], index: number) => {
+          return arr.map((item: any) => 
+            fileNameSet.has(item.fileName) 
+              ? { ...item, status: 'reminded' } 
+              : item
+          );
+        });
+        
+        dispatch(updateDataSourceListState(updatedDataSourceList));
+        
+        setEmailModalVisible(false);
+        setSending(false);
+        setSelectedRowKeys([]);
+        message.success({ 
+          content: `邮件发送成功，${fileNames.length} 个文件已标记为已提醒`, 
+          key: 'mailSending' 
+        });
+        
+        console.log('状态更新完成，已提醒文件数量:', fileNames.length);
+      } catch (error) {
+        console.error('发送邮件时出错:', error);
+        setSending(false);
+        message.error({ content: '发送失败，请重试', key: 'mailSending' });
+      }
+    }, 2000);
+  };
+
+  // 柱状图配置选项
   const barChartOption = {
     tooltip: {
       trigger: 'axis',
@@ -212,23 +255,11 @@ function Home() {
   };
 
   const field = ['1天内', '7天内', '30天内', '90天内'];
-  // const fieldCount = [5, 20, 40, 200];
 
   const selectField = (idx: number) => {
     setFieldId(idx);
-    // 更新 dataSource 为对应分类的数据
     setDataSource(dataSourceListState[idx]);
     setSelectedRowKeys([]);
-  };
-
-  const handleBatchReminder = () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('请先选择要发送提醒的文件');
-      return;
-    }
-    const selectedKeySet = new Set(selectedRowKeys.map(k => String(k)));
-    const selectedRecords = dataSource.filter((it: any) => selectedKeySet.has(String(it.fileCode ?? it.key)));
-    sendReminder(selectedRecords, 'batch');
   };
 
   const rowSelection = {
@@ -300,40 +331,38 @@ function Home() {
 
             <Table
               dataSource={dataSource}
-              columns={(() => {
-                return [
-                  ...columns.slice(0, 4),
-                  {
-                    title: '操作',
-                    key: 'action',
-                    render: (_: any, record: any) => (
-                      <Button
-                        type="link"
-                        size="small"
-                        className="reminder-btn"
-                        onClick={() => sendReminder(record, 'single')}
-                        loading={sending}
-                        disabled={sending}
-                      >
-                        发送到期提醒
-                      </Button>
-                    ),
-                  },
-                  {
-                    title: '状态',
-                    dataIndex: 'status',
-                    key: 'status',
-                    render: (status: string) => (
-                      status === 'reminded' ?
-                        <Badge status="success" text="已提醒" className="reminded-badge" /> :
-                        <span className="not-reminded">未提醒</span>
-                    ),
-                  },
-                ];
-              })() as any}
+              columns={[
+                ...columns,
+                {
+                  title: '操作',
+                  key: 'action',
+                  render: (_: any, record: any) => (
+                    <Button
+                      type="link"
+                      size="small"
+                      className="reminder-btn"
+                      onClick={() => sendReminder(record, 'single')}
+                      loading={sending}
+                      disabled={sending}
+                    >
+                      发送到期提醒
+                    </Button>
+                  ),
+                },
+                {
+                  title: '状态',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status: string) => (
+                    status === 'reminded' ?
+                      <Badge status="success" text="已提醒" className="reminded-badge" /> :
+                      <span className="not-reminded">未提醒</span>
+                  ),
+                },
+              ] as any}
               rowSelection={rowSelection}
               pagination={false}
-              rowKey={(record: any) => record.fileName || record.key}
+              rowKey={(record: any) => record.fileName} // 统一使用 fileName 作为 key
               className="file-table"
             />
 
@@ -342,38 +371,53 @@ function Home() {
               title={emailType === 'single' ? '发送邮件提醒' : '发送邮件提醒（批量）'}
               open={emailModalVisible}
               onCancel={() => setEmailModalVisible(false)}
-              onOk={() => {
-                // 立即发送（模拟）：更新对应行的状态并关闭
-                setSending(true);
-                message.loading({ content: '发送邮件中...', key: 'mailSending', duration: 0 });
-                setTimeout(() => {
-                  const codes = emailTargets.map(r => String(r.fileCode ?? r.key));
-                  const codeSet = new Set(codes);
-                  setDataSource(prev => prev.map((it: any) => (codeSet.has(String(it.fileCode ?? it.key)) ? { ...it, status: 'reminded' } : it)));
-                  setEmailModalVisible(false);
-                  setSending(false);
-                  setSelectedRowKeys([]);
-                  message.success({ content: '邮件发送成功，相关行已标记为 已提醒', key: 'mailSending' });
-                }, 2000);
-              }}
+              onOk={handleSendEmail}
               width={800}
               okText="发送"
               cancelText="取消"
+              confirmLoading={sending}
             >
               <Form layout="vertical">
                 <Form.Item label="收件人 (To)">
-                  <Input value={emailDraft.to} onChange={(e) => setEmailDraft(prev => ({ ...prev, to: e.target.value }))} />
+                  <Input 
+                    value={emailDraft.to} 
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, to: e.target.value }))} 
+                  />
                 </Form.Item>
                 <Form.Item label="抄送 (CC)">
-                  <Input value={emailDraft.cc} onChange={(e) => setEmailDraft(prev => ({ ...prev, cc: e.target.value }))} />
+                  <Input 
+                    value={emailDraft.cc} 
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, cc: e.target.value }))} 
+                  />
                 </Form.Item>
                 <Form.Item label="邮件标题 (Subject)">
-                  <Input value={emailDraft.subject} onChange={(e) => setEmailDraft(prev => ({ ...prev, subject: e.target.value }))} />
+                  <Input 
+                    value={emailDraft.subject} 
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, subject: e.target.value }))} 
+                  />
                 </Form.Item>
                 <Form.Item label="邮件内容 (Body)">
-                  <Input.TextArea rows={8} value={emailDraft.body} onChange={(e) => setEmailDraft(prev => ({ ...prev, body: e.target.value }))} />
+                  <Input.TextArea 
+                    rows={8} 
+                    value={emailDraft.body} 
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, body: e.target.value }))} 
+                  />
                 </Form.Item>
               </Form>
+              
+              {/* 批量发送时显示目标文件列表 */}
+              {emailType === 'batch' && (
+                <div className="email-targets">
+                  <p><strong>目标文件 ({emailTargets.length} 个):</strong></p>
+                  <div style={{ maxHeight: '120px', overflow: 'auto' }}>
+                    {emailTargets.map((target, index) => (
+                      <div key={index} style={{ fontSize: '12px', color: '#666' }}>
+                        • {target.fileName}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Modal>
           </Card>
         </Col>
