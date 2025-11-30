@@ -64,7 +64,7 @@ function Query() {
 
       const response = await fetch(url);
       const result = await response.json();
-      
+
       if (result.success) {
         setData(result.data || []);
         setFilteredData(result.data || []);
@@ -111,7 +111,7 @@ function Query() {
       title: '文件名',
       dataIndex: 'title',
       key: 'title',
-      width: 120,
+      width: 200,
       render: (text: string) => (
         <div className="file-name-cell">
           <FileTextOutlined className="file-icon" />
@@ -134,39 +134,48 @@ function Query() {
       title: '客户',
       dataIndex: 'customer_name',
       key: 'customer_name',
-      width: 120,
+      width: 90,
       render: (customer: string) => (
         <span className="customer-text">{customer}</span>
       )
     },
     {
-      title: '签署日期',
+      title: '签署日',
       dataIndex: 'sign_date',
       key: 'sign_date',
-      width: 120,
+      width: 90,
+      sorter: (a, b) => new Date(a.sign_date).getTime() - new Date(b.sign_date).getTime(),
       render: (date: string) => (
         <span className="date-text">{date}</span>
       )
     },
     {
-      title: '截止日期',
+      title: '到期日',
       dataIndex: 'deadline',
       key: 'deadline',
       width: 120,
-      render: (date: string) => (
-        <span className="date-text">{date}</span>
-      )
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: FileItem['status']) => (
-        <span className={`status-badge status-${status}`}>
-          {status}
-        </span>
-      )
+      defaultSortOrder: 'ascend', // 默认升序（日期近的上面）
+      sorter: (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
+      render: (text: string) => {
+        if (!text) return <span>-</span>;
+
+        // 固定参考日期为2025年12月5日
+        const referenceDate = new Date('2025-12-05');
+        const deadline = new Date(text);
+
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const diff = Math.ceil((deadline.setHours(0, 0, 0, 0) - referenceDate.setHours(0, 0, 0, 0)) / msPerDay);
+
+        let statusClass = '';
+        if (diff <= 1) statusClass = 'deadline-urgent';      // 1天内：红色
+        else if (diff <= 7) statusClass = 'deadline-warning'; // 7天内：黄色
+
+        return (
+          <Tag className={`deadline-tag ${statusClass}`}>
+            {text}
+          </Tag>
+        );
+      },
     }
   ];
 
@@ -364,6 +373,7 @@ function Query() {
               </div>
             )
           }}
+          sortDirections={['ascend', 'descend']}
         />
       </Card>
     </div>

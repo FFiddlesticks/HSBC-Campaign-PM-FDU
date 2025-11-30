@@ -2,9 +2,11 @@ import { Button, Card, Col, Row, Table, message, Tag, Badge, Modal, Input, Form 
 import ReactECharts from 'echarts-for-react';
 import './index.less';
 // import { dataSource } from './../../const/mock'
-import { useState } from 'react';
-import { dataSourceList, dataSourceListPre } from './../../const/dashBoardData';
-import { useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { dataSourceListPre } from './../../const/dashBoardData';
+import { useDispatch, useSelector } from 'react-redux';
+import { cloneDeep } from 'lodash'
+import { updateDataSourceListState } from '../../store/formData';
 
 const columns = [
   {
@@ -13,29 +15,36 @@ const columns = [
     key: 'fileName',
   },
   {
-    title: '签署日期',
+    title: '签署日',
     dataIndex: 'signDate',
     key: 'signDate',
   },
   {
-    title: '截止日期',
+    title: '到期日',
     dataIndex: 'deadline',
     key: 'deadline',
     render: (text: string) => {
       if (!text) return <span>-</span>;
-      const now = new Date();
+
+      // 固定参考日期为2025年12月5日
+      const referenceDate = new Date('2025-12-05');
       const deadline = new Date(text);
+
       const msPerDay = 1000 * 60 * 60 * 24;
-      const diff = Math.ceil((deadline.setHours(0, 0, 0, 0) - now.setHours(0, 0, 0, 0)) / msPerDay);
+      const diff = Math.ceil((deadline.setHours(0, 0, 0, 0) - referenceDate.setHours(0, 0, 0, 0)) / msPerDay);
+
       let statusClass = '';
-      if (diff <= 3) statusClass = 'deadline-urgent';
-      else if (diff <= 7) statusClass = 'deadline-warning';
+      if (diff <= 1) statusClass = 'deadline-urgent';      // 1天内：红色
+      else if (diff <= 7) statusClass = 'deadline-warning'; // 7天内：黄色
+
       return (
         <Tag className={`deadline-tag ${statusClass}`}>
           {text}
         </Tag>
       );
     },
+    defaultSortOrder: 'ascend', // 默认升序（日期近的上面）
+    sorter: (a: any, b: any) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
   },
   {
     title: '客户名',
@@ -50,14 +59,64 @@ const columns = [
   },
 ];
 
-const cloumnsDat=[[19, 0, 0, 2, 9, 7, 0, 0, 0, 0, 0, 0],[20, 0, 0, 2, 10, 8, 0, 0, 0, 0, 0, 0]]
+const cloumnsDat = [[19, 0, 0, 2, 9, 7, 0, 0, 0, 0, 0, 0], [20, 0, 0, 2, 10, 8, 0, 0, 0, 0, 0, 0]]
 
 function Home() {
   const [filedId, setFieldId] = useState(1);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [dataSource,setDataSource]=useState(dataSourceList[1])
-  const isUpload=useSelector(state=>(state as any)?.data?.isUpload)
-  
+  // 添加 dataSourceList 状态管理
+  // const [dataSourceListState, setDataSourceListState] = useState(dataSourceListPre);
+  const [dataSource, setDataSource] = useState(dataSourceListPre[1])
+  const newDashBoardData = useSelector(state => (state as any)?.data?.newDashBoardData)
+  const dataSourceListState = useSelector(state => (state as any)?.data?.dataSourceListState)
+
+  const dispatch = useDispatch()
+
+  console.log('dataSourceListState==', dataSourceListState);
+  console.log('dataSource===', dataSource);
+
+  useEffect(() => {
+    if (!newDashBoardData || !Array.isArray(newDashBoardData)) return;
+    const prevDataSourceList = cloneDeep(dataSourceListState)
+    // 基于前一个状态创建深拷贝
+    const updatedDataSource = prevDataSourceList.map((arr:any) => [...arr]);
+
+    // 遍历四天的数据
+    newDashBoardData.forEach((newItem, dayIndex) => {
+      // 检查dayIndex是否有效
+      if (dayIndex < 0 || dayIndex > 3) return;
+
+      // 如果是空对象 {}，则跳过
+      if (!newItem || typeof newItem !== 'object' || Object.keys(newItem).length === 0) return;
+
+      const { fileName } = newItem;
+      if (!fileName) return;
+
+      const targetArray = updatedDataSource[dayIndex];
+
+      // 在当前天的目标数组中查找是否已存在相同文件名的项
+      const existingIndex = targetArray.findIndex((existingItem:any) =>
+        existingItem.fileName === fileName
+      );
+
+      if (existingIndex === -1) {
+        // 如果不存在，添加新项
+        targetArray.push(newItem);
+      } else {
+        // 如果已存在，更新该项
+        targetArray[existingIndex] = newItem;
+      }
+    });
+
+    dispatch(updateDataSourceListState(updatedDataSource))
+
+  }, [newDashBoardData]);
+
+  // 当 dataSourceListState 更新时，同步更新当前显示的 dataSource
+  useEffect(() => {
+    setDataSource(dataSourceListState[filedId]);
+  }, [dataSourceListState, filedId]);
+
   // const [data, setData] = useState(
   //   dataSource.map((it: any) => ({ ...it, status: it.status || '' }))
   // );
@@ -138,7 +197,7 @@ function Home() {
       {
         name: '到期文档',
         type: 'bar',
-        data: isUpload?cloumnsDat[1]:cloumnsDat[0],
+        data: cloumnsDat[1],
         itemStyle: {
           color: '#1890ff'
         }
@@ -157,7 +216,8 @@ function Home() {
 
   const selectField = (idx: number) => {
     setFieldId(idx);
-    setDataSource(isUpload?dataSourceList[idx]:dataSourceListPre[idx])
+    // 更新 dataSource 为对应分类的数据
+    setDataSource(dataSourceListState[idx]);
     setSelectedRowKeys([]);
   };
 
@@ -180,14 +240,14 @@ function Home() {
 
   return (
     <div className="home-page">
-      <Row className="summary-row">
-        <Col span={24}>
-          <Card className="summary-card">
+      <Row className="summary-row" gutter={16}>
+        <Col span={12}>
+          <Card className="summary-card equal-height-card">
             <div className="time-filter">
               {field.map((item, idx: number) => (
                 <Button
                   key={idx}
-                  className={`filter-btn ${filedId === idx ? 'filter-btn-active' : ''}`}
+                  className={`filter-btn large-btn ${filedId === idx ? 'filter-btn-active' : ''}`}
                   onClick={() => selectField(idx)}
                 >
                   {item}
@@ -198,23 +258,22 @@ function Home() {
               <h3 className="summary-title">
                 最近{field[filedId]}，有 <span className="highlight-count">{dataSource.length}</span> 份文件即将到期
               </h3>
-              <span className="summary-desc">请及时处理这些即将到期的文件</span>
+              <p className="summary-desc">请及时处理这些即将到期的文件</p>
             </div>
           </Card>
         </Col>
-      </Row>
-
-      <Row className="chart-row">
-        <Col span={24}>
-          <Card className="chart-card">
+        <Col span={12}>
+          <Card className="chart-card equal-height-card">
             <div className="chart-header">
               <h4 className="chart-title">未来90天到期文件统计</h4>
             </div>
-            <ReactECharts
-              option={barChartOption}
-              className="chart-container"
-              opts={{ renderer: 'svg' }}
-            />
+            <div className="chart-wrapper">
+              <ReactECharts
+                option={barChartOption}
+                className="chart-container"
+                opts={{ renderer: 'svg' }}
+              />
+            </div>
           </Card>
         </Col>
       </Row>
@@ -271,10 +330,10 @@ function Home() {
                     ),
                   },
                 ];
-              })()}
+              })() as any}
               rowSelection={rowSelection}
               pagination={false}
-              rowKey={(record: any) => record.fileCode || record.key}
+              rowKey={(record: any) => record.fileName || record.key}
               className="file-table"
             />
 

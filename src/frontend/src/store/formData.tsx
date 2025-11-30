@@ -1,12 +1,15 @@
 // src/store/features/counterSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { dataSourceListPre } from '../const/dashBoardData'
 
 interface CounterState {
-  newDashBoardData:any
+  newDashBoardData:any,
+  dataSourceListState:any
 }
 
 const initialState: CounterState = {
-  newDashBoardData:[[],[],[],[]]
+  newDashBoardData:[{},{},{},{}],
+  dataSourceListState:dataSourceListPre
 }
 
 export const counterSlice = createSlice({
@@ -16,8 +19,11 @@ export const counterSlice = createSlice({
     updateNewDashBoardData: (state, action: PayloadAction<any>) => {
       state. newDashBoardData= action.payload
     },
+    updateDataSourceListState:(state,action: PayloadAction<any>)=>{
+      state.dataSourceListState =action.payload
+    }
   }
 })
 
-export const { updateNewDashBoardData } = counterSlice.actions
+export const { updateNewDashBoardData,updateDataSourceListState } = counterSlice.actions
 export default counterSlice.reducer

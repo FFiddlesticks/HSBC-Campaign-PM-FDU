@@ -31,100 +31,104 @@
   min-height: 100vh;
 }
 
-// 汇总卡片样式
 .summary-row {
-  .summary-card {
-    border-radius: @border-radius-base;
-    box-shadow: @box-shadow-card;
-    background: @white;
-    border: 1px solid @border-color-base;
-    
-    .ant-card-body {
-      padding: 20px;
-    }
-    
-    .time-filter {
-      margin-bottom: 16px;
-      
-      .filter-btn {
-        margin-right: 12px;
-        border: 1px solid @border-color-light;
-        border-radius: 16px;
-        padding: 4px 16px;
-        height: auto;
-        font-size: 13px;
-        color: @text-color-secondary;
-        background: @white;
-        transition: all 0.2s ease;
-        
-        &:hover {
-          border-color: @primary-color;
-          color: @primary-color;
-        }
-        
-        &.filter-btn-active {
-          background: @primary-color;
-          border-color: @primary-color;
-          color: @white;
-          
-          &:hover {
-            background: @primary-hover;
-            border-color: @primary-hover;
-          }
-        }
-      }
-    }
-    
-    .summary-content {
-      .summary-title {
-        margin: 0 0 8px 0;
-        font-size: 18px;
-        font-weight: 500;
-        color: @text-color;
-        
-        .highlight-count {
-          color: @primary-color;
-          font-weight: 600;
-        }
-      }
-      
-      .summary-desc {
-        color: @text-color-secondary;
-        font-size: 14px;
-      }
-    }
-  }
+  display: flex;
+  margin-bottom: 24px;
 }
 
-// 图表卡片样式
-.chart-row {
-  margin-top: 20px;
-  
-  .chart-card {
-    border-radius: @border-radius-base;
-    box-shadow: @box-shadow-card;
-    background: @white;
-    border: 1px solid @border-color-base;
-    
-    .ant-card-body {
-      padding: 20px;
-    }
-    
-    .chart-header {
-      margin-bottom: 16px;
-      
-      .chart-title {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 500;
-        color: @text-color;
-      }
-    }
-    
-    .chart-container {
-      height: 280px !important;
-    }
-  }
+.summary-row .ant-col {
+  display: flex;
+}
+
+.equal-height-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* 减小整体高度 */
+  min-height: 200px;
+}
+
+.equal-height-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px; /* 减小内边距 */
+}
+
+/* 左侧卡片样式 */
+.time-filter {
+  margin-bottom: 16px; /* 减小间距 */
+}
+
+.filter-btn {
+  margin-right: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+}
+
+/* 增大按钮尺寸 */
+.large-btn {
+  height: 36px; /* 增加高度 */
+  padding: 0 16px; /* 增加左右内边距 */
+  font-size: 14px; /* 增大字体 */
+  font-weight: 500;
+}
+
+.filter-btn-active {
+  background: #1890ff;
+  color: #fff;
+  border-color: #1890ff;
+}
+
+.summary-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 调整标题和文字大小 */
+.summary-title {
+  margin: 0 0 8px 0; /* 减小间距 */
+  font-size: 16px; /* 减小字体 */
+  font-weight: 500;
+  color: #333;
+}
+
+.highlight-count {
+  color: #ff4d4f;
+  font-size: 24px; /* 减小字体 */
+  font-weight: 600;
+}
+
+.summary-desc {
+  color: #666;
+  font-size: 13px; /* 减小字体 */
+  margin: 0;
+}
+
+/* 右侧图表样式 */
+.chart-header {
+  margin-bottom: 12px; /* 减小间距 */
+}
+
+.chart-title {
+  margin: 0;
+  font-size: 14px; /* 减小字体 */
+  font-weight: 500;
+  color: #333;
+}
+
+.chart-wrapper {
+  flex: 1;
+  min-height: 180px; /* 减小最小高度 */
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
 }
 
 // 表格卡片样式
