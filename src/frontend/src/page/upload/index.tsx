@@ -467,10 +467,6 @@ function UploadPage() {
                                                 a.href = href;
                                                 a.download = part.name;
                                                 a.click();
-                                                // 如果是本地生成的 objectURL，尝试释放
-                                                if (part.url && href === part.url) {
-                                                    try { URL.revokeObjectURL(part.url); } catch (e) { }
-                                                }
                                             }}>下载</Button>
                                             <Button size="small" danger onClick={() => {
                                                 try { if (part.url) URL.revokeObjectURL(part.url); } catch (e) { }
@@ -496,9 +492,6 @@ function UploadPage() {
                                         a.href = href;
                                         a.download = part.name;
                                         a.click();
-                                        if (part.url && href === part.url) {
-                                            try { URL.revokeObjectURL(part.url); } catch (e) { }
-                                        }
                                     });
                                 }}>全部下载</Button>
                             </div>
@@ -523,7 +516,6 @@ function UploadPage() {
                                                     a.href = href;
                                                     a.download = previewPart.name;
                                                     a.click();
-                                                    if (previewPart.url && href === previewPart.url) try { URL.revokeObjectURL(previewPart.url); } catch (e) { }
                                                 }}>下载</Button>
                                                 <Button size="small" onClick={() => {
                                                     const href = previewPart.url || previewPart.downloadUrl;
