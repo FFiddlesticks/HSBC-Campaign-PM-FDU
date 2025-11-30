@@ -16,7 +16,8 @@ const LayoutPage: React.FC = () => {
 
   return (
     <Layout>
-      <Header style={{ display: 'flex', alignItems: 'center',height:50 }}>
+      <Header style={{ display: 'flex', alignItems: 'center',height:50 ,color:'white',paddingLeft:20}}>
+        Argus - 智能文件管理系统
       </Header>
       <Layout className='layout'>
         <Sider width={200} style={{ background: colorBgContainer }}>

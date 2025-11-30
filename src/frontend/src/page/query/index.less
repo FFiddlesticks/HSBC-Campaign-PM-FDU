@@ -271,6 +271,31 @@
   }
 }
 
+// 截止日期标签
+      .deadline-tag {
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        border: none;
+        margin: 0;
+        font-weight: 400;
+        
+        &.deadline-urgent {
+          background: fade(@error-color, 8%);
+          color: @error-color;
+        }
+        
+        &.deadline-warning {
+          background: fade(@warning-color, 8%);
+          color: @warning-color;
+        }
+        
+        &.deadline-normal {
+          background: fade(@success-color, 8%);
+          color: @success-color;
+        }
+      }
+
 // 文件类型标签
 .file-type-tag {
   border: none;
